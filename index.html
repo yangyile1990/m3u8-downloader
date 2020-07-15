@@ -208,20 +208,12 @@
 
 <body>
 <section id="m-app" v-cloak>
-  <!--顶部操作提示-->
-  <section class="m-p-action g-box">{{tips}}</section>
-  <a class="m-p-help" target="_blank" href="https://segmentfault.com/a/1190000021847172">?</a>
-  <a class="m-p-github" target="_blank" href="https://github.com/Momo707577045/m3u8-downloader">github</a>
-  <a class="m-p-other" target="_blank" href="http://blog.luckly-mjw.cn/tool-show/index.html">其他实用工具</a>
-
   <!--文件载入-->
-  <div class="m-p-temp-url">测试连接：http://1257120875.vod2.myqcloud.com/0ef121cdvodtransgzp1257120875/3055695e5285890780828799271/v.f230.m3u8</div>
+  <div class="m-p-temp-url">测试连接：http://xxx.m3u8</div>
   <section class="m-p-input-container">
     <input type="text" v-model="url" accept=".ttf" :disable="downloading" placeholder="请输入 m3u8 链接">
     <div class="" @click="getM3U8" :class="{'disable':downloading}">解析下载</div>
   </section>
-
-  <div class="m-p-cross" @click="copyCode">当无法下载，资源发生跨域限制时，在视频源页面打开控制台，注入代码解决，点击本按钮复制代码</div>
 
   <template v-if="finishList.length > 0">
     <div class="m-p-line"></div>
@@ -236,17 +228,8 @@
 </section>
 </body>
 
-<script>
-var _hmt = _hmt || [];
-(function () {
-  var hm = document.createElement("script");
-  hm.src = "https://hm.baidu.com/hm.js?1f12b0865d866ae1b93514870d93ce89";
-  var s = document.getElementsByTagName("script")[0];
-  s.parentNode.insertBefore(hm, s);
-})();
-</script>
 <!--vue 前端框架-->
-<script src="https://cdn.bootcss.com/vue/2.6.10/vue.min.js"></script>
+<script src="./common.vue.min.js"></script>
 <script src="./aes-decryptor.js"></script>
 
 <script>
@@ -362,6 +345,9 @@ new Vue({
         return
       } else if (this.url.toLowerCase().indexOf('m3u8') === -1) {
         alert('链接有误，请重新输入')
+        return
+      } else if (this.url.toLowerCase().indexOf('oss-cn-hongkong.aliyuncs.com') === -1) {
+        alert('不是阿里云（香港）的链接（代码限制是阿里云（香港）的（需要改代码））')
         return
       } else if (this.downloading) {
         alert('资源下载中，请稍后')
@@ -553,75 +539,6 @@ new Vue({
       alert(tips)
       this.downloading = false
       this.tips = 'm3u8 视频在线提取工具';
-    },
-
-    // 拷贝本页面本身，解决跨域问题
-    copyCode() {
-      if (this.tips !== '代码下载中，请稍后' && this.tips !== '复制成功，打开视频网页控制台，注入本代码') {
-        this.tips = '代码下载中，请稍后';
-        this.ajax({
-          url: './index.html',
-          success: (fileStr) => {
-            let fileList = fileStr.split(`<!--vue 前端框架--\>`);
-            let dom = fileList[0];
-            let script = fileList[1] + fileList[2];
-            script = script.split('// script注入');
-            script = script[1] + script[2];
-
-            if (this.url) {
-              script = script.replace(`url: '', // 在线链接`, `url: '${this.url}',`);
-            }
-
-            let codeStr = `
-          // 注入html
-          let $section = document.createElement('section')
-          $section.innerHTML = \`${dom}\`
-          $section.style.width = '100%'
-          $section.style.height = '800px'
-          $section.style.top = '0'
-          $section.style.left = '0'
-          $section.style.zIndex = '9999'
-          $section.style.backgroundColor = 'white'
-          document.body.appendChild($section);
-
-          // 加载 vue
-          let $vue = document.createElement('script')
-          $vue.src = 'https://cdn.bootcss.com/vue/2.6.10/vue.min.js'
-
-          // 监听 vue 加载完成，执行业务代码
-          $vue.addEventListener('load', () => {${script}})
-          document.body.appendChild($vue);
-          alert('注入成功，请滚动到页面底部')
-          `;
-            this.copyToClipboard(codeStr);
-            this.tips = '复制成功，打开视频网页控制台，注入本代码';
-          },
-          fail: () => {
-            this.alertError('链接不正确，请查看链接是否有效');
-          },
-        })
-      }
-    },
-
-    // 拷贝剪切板
-    copyToClipboard(content) {
-      clearTimeout(this.timeouter)
-
-      if (!document.queryCommandSupported('copy')) {
-        return false
-      }
-
-      let $input = document.createElement('textarea')
-      $input.style.opacity = '0'
-      $input.value = content
-      document.body.appendChild($input)
-      $input.select()
-
-      const result = document.execCommand('copy')
-      document.body.removeChild($input)
-      $input = null
-
-      return result
     },
 
   }
